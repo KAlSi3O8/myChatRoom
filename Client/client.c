@@ -11,22 +11,39 @@
 
 #define     PORT        "6010"
 #define     BUFLEN      1500
+#define     NAMELEN     20
 #define     err       WSAGetLastError()
+
+struct s_pdata {
+    char *name;
+    char *msg;
+};
 
 void *send_thread (void *arg) {
     SOCKET *socket = (SOCKET *)arg;
+    struct s_pdata pdata;
     char buf[BUFLEN];
+    int size;
     int ret;
 
     memset(buf, 0, BUFLEN);
 
+    pdata.name = buf;
+    printf("what's your name: ");
+    scanf("%s", pdata.name);
+    size = strlen(pdata.name);
+    pdata.name[size++] = ':';
+    pdata.name[size++] = ' ';
+    pdata.msg = buf + size;
+
     while(1) {
-        fgets(buf, BUFLEN, stdin);
-        ret = send(*socket, buf, strlen(buf), 0);
-        if (ret == SOCKET_ERROR) {
-            printf("ret: %d, err: %d\n", ret, err);
-            if (err == WSAECONNRESET) {
-                break;
+        if (fgets(pdata.msg, BUFLEN, stdin) != NULL) {
+            ret = send(*socket, buf, strlen(buf), 0);
+            if (ret == SOCKET_ERROR) {
+                printf("%s ret: %d, err: %d\n",__FUNCTION__ , ret, err);
+                if (err == WSAECONNRESET) {
+                    break;
+                }
             }
         }
     }
@@ -47,10 +64,8 @@ void *recv_thread (void *arg) {
         if (len > 0) {
             printf("%s", buf);
         } else {
-            printf("len: %d, err: %d\n", len, err);
-            if (err == WSAECONNRESET) {
-                break;
-            }
+            printf("%s len: %d, err: %d\n",__FUNCTION__ , len, err);
+            break;
         }
     }
 
