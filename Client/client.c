@@ -14,6 +14,8 @@
 #define     NAMELEN     20
 #define     err       WSAGetLastError()
 
+char gets_buf[BUFLEN] = {0};
+
 struct s_pdata {
     char *name;
     char *msg;
@@ -27,17 +29,27 @@ void *send_thread (void *arg) {
     int ret;
 
     memset(buf, 0, BUFLEN);
+    usleep(20000);
 
     pdata.name = buf;
     printf("what's your name: ");
-    scanf("%s\r\n", pdata.name);
-    size = strlen(pdata.name);
+    if (NULL != fgets(pdata.name, NAMELEN, stdin)) {
+        size = strlen(pdata.name) - 1;
+        ret = sprintf(buf + size, " Enter the room.\n");
+        ret = send(*socket, buf, size + ret, 0);
+        if (ret == -1) {
+            printf("send error!\n");
+        }
+    } else {
+        return NULL;
+    }
+
     pdata.name[size++] = ':';
     pdata.name[size++] = ' ';
     pdata.msg = buf + size;
 
     while(1) {
-        if (fgets(pdata.msg, BUFLEN, stdin) != NULL) {
+        if (NULL != fgets(pdata.msg, BUFLEN, stdin)) {
             ret = send(*socket, buf, strlen(buf), 0);
             if (ret == SOCKET_ERROR) {
                 printf("%s ret: %d, err: %d\n",__FUNCTION__ , ret, err);
@@ -61,8 +73,9 @@ void *recv_thread (void *arg) {
 
     while(1) {
         len = recv(*socket, buf, BUFLEN, 0);
+        buf[len] = 0;
         if (len > 0) {
-            printf("%s", buf);
+            printf("\r%s", buf);
         } else {
             printf("%s len: %d, err: %d\n",__FUNCTION__ , len, err);
             break;
@@ -75,11 +88,6 @@ void *recv_thread (void *arg) {
 
 int main(int argc, char *argv[]) {
     int ret;
-
-    if (argc < 2) {
-        printf("Usage: %s ipaddr\n", argv[0]);
-        return 0;
-    }
 
     SOCKET client_sock = INVALID_SOCKET;
 
@@ -106,6 +114,12 @@ int main(int argc, char *argv[]) {
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
     hints.ai_flags = AI_PASSIVE;
+
+    if (argc < 2) {
+        ret = getaddrinfo("www.tokiinu.top", PORT, &hints, &result);
+    } else {
+        ret = getaddrinfo(argv[1], PORT, &hints, &result);
+    }
 
     ret = getaddrinfo(argv[1], PORT, &hints, &result);
     if (ret != 0) {
