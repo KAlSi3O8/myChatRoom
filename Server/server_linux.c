@@ -11,6 +11,7 @@
 #define     PORT        6010
 #define     MAXCLIENTS  5
 #define     BUFLEN      1500
+#define     ROOMFULL    "This room is full!\n"
 
 struct s_client_info {
     pthread_t tid;
@@ -123,6 +124,10 @@ int main(int argc, char *argv[]) {
         }
 
         printf("max clients reached\n");
+        ret = send(connect_sock, ROOMFULL, sizeof(ROOMFULL), 0);
+        if (ret == -1) {
+            perror("send");
+        }
         close(connect_sock);
     }
 
