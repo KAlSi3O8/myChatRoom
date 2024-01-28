@@ -30,7 +30,7 @@ void *send_thread (void *arg) {
 
     pdata.name = buf;
     printf("what's your name: ");
-    scanf("%s", pdata.name);
+    scanf("%s\r\n", pdata.name);
     size = strlen(pdata.name);
     pdata.name[size++] = ':';
     pdata.name[size++] = ' ';
