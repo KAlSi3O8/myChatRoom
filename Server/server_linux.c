@@ -46,11 +46,10 @@ void *service(void *arg) {
                     }
                 }
             }
-        } else if (len == 0) {
-            return NULL;
         } else {
             close(p_clients->socket);
             p_clients->socket = 0;
+            printf("client service Exit-->\n");
             return NULL;
         }
     }
