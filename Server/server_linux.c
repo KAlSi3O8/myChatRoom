@@ -29,7 +29,8 @@ void *service(void *arg) {
 
     while (1) {
         len = recv(p_clients->socket, buf, BUFLEN, 0);
-        printf("[%ld]%d: %s\n", p_clients->tid, p_clients->socket, buf);
+        buf[len] = 0;
+        printf("[%d]: %s", p_clients->socket, buf);
         if (len > 0) {
             for (int i = 0; i < MAXCLIENTS; i++) {
                 // boardcast ot other clients
@@ -111,6 +112,7 @@ int main(int argc, char *argv[]) {
             }
         }
 
+        printf("max clients reached\n");
         close(connect_sock);
     }
 
