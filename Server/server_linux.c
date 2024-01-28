@@ -19,13 +19,22 @@ struct s_client_info {
 
 void *service(void *arg) {
     struct s_client_info *p_clients = (struct s_client_info *)arg;
-    char buf[BUFLEN];
-    int len;
-    int ret;
+    char buf[BUFLEN] = {0};
+    int len = 0;
+    int ret = 0;
+    int clients_cnt = 0;
 
-    printf("client service Entry--> [%ld]%d\n", p_clients->tid, p_clients->socket);
-
-    memset(buf, 0, BUFLEN);
+    printf("[%d]: client service Entry-->\n", p_clients->socket);
+    for (int i = 0; i < MAXCLIENTS; i++) {
+        if (clients[i].socket != 0) {
+            clients_cnt++;
+        }
+    }
+    len = sprintf(buf, "There are %d/%d in this room.\n", clients_cnt, MAXCLIENTS);
+    ret = send(p_clients->socket, buf, len, 0);
+    if (ret == -1) {
+        perror("send");
+    }
 
     while (1) {
         len = recv(p_clients->socket, buf, BUFLEN, 0);
@@ -50,6 +59,7 @@ void *service(void *arg) {
         } else {
             close(p_clients->socket);
             p_clients->socket = 0;
+            p_clients->tid = 0;
             printf("client service Exit-->\n");
             return NULL;
         }
