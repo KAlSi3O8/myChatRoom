@@ -14,29 +14,24 @@
 #define     NAMELEN     20
 #define     err       WSAGetLastError()
 
-char gets_buf[BUFLEN] = {0};
-
-struct s_pdata {
-    char *name;
-    char *msg;
-};
+char name[NAMELEN];
 
 void *send_thread (void *arg) {
     SOCKET *socket = (SOCKET *)arg;
-    struct s_pdata pdata;
     char buf[BUFLEN];
+    char *msg;
     int size;
     int ret;
 
     memset(buf, 0, BUFLEN);
     usleep(20000);
 
-    pdata.name = buf;
-    printf("what's your name: ");
-    if (NULL != fgets(pdata.name, NAMELEN, stdin)) {
-        size = strlen(pdata.name) - 1;
-        ret = sprintf(buf + size, " Enter the room.\n");
-        ret = send(*socket, buf, size + ret, 0);
+    printf("\rwhat's your name: ");
+    if (NULL != fgets(name, NAMELEN, stdin)) {
+        size = strlen(name) - 1;
+        name[size] = 0;
+        ret = sprintf(buf, "%s Enter the room.\n", name);
+        ret = send(*socket, buf, ret, 0);
         if (ret == -1) {
             printf("send error!\n");
         }
@@ -44,12 +39,14 @@ void *send_thread (void *arg) {
         return NULL;
     }
 
-    pdata.name[size++] = ':';
-    pdata.name[size++] = ' ';
-    pdata.msg = buf + size;
+    strncpy(name, buf, size);
+    buf[size++] = ':';
+    buf[size++] = ' ';
+    msg = buf + size;
 
     while(1) {
-        if (NULL != fgets(pdata.msg, BUFLEN, stdin)) {
+        printf("%s: ", name);
+        if (NULL != fgets(msg, BUFLEN, stdin)) {
             ret = send(*socket, buf, strlen(buf), 0);
             if (ret == SOCKET_ERROR) {
                 printf("%s ret: %d, err: %d\n",__FUNCTION__ , ret, err);
@@ -57,10 +54,12 @@ void *send_thread (void *arg) {
                     break;
                 }
             }
+        } else {
+            break;
         }
     }
 
-    printf("send_thread Exit-->\n");
+    printf("\rExit Room\n");
     return NULL;
 }
 
@@ -73,16 +72,15 @@ void *recv_thread (void *arg) {
 
     while(1) {
         len = recv(*socket, buf, BUFLEN, 0);
-        buf[len] = 0;
         if (len > 0) {
-            printf("\r%s", buf);
+            buf[len] = 0;
+            printf("\r%s%s: ", buf, name);
         } else {
             printf("%s len: %d, err: %d\n",__FUNCTION__ , len, err);
             break;
         }
     }
 
-    printf("recv_thread Exit-->\n");
     return NULL;
 }
 
