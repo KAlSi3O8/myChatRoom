@@ -119,7 +119,6 @@ int main(int argc, char *argv[]) {
         ret = getaddrinfo(argv[1], PORT, &hints, &result);
     }
 
-    ret = getaddrinfo(argv[1], PORT, &hints, &result);
     if (ret != 0) {
         printf("%d: %d\n", __LINE__, err);
         WSACleanup();
